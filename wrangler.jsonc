@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "creatiguate-intercanto-votaciones",
+  "main": "./src/index.js",
+  "compatibility_date": "2026-11-09",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": [
+      "/api/*",
+      "/c/*",
+      "/admin",
+      "/mercurio",
+      "/venus",
+      "/tierra",
+      "/marte",
+      "/jupiter",
+      "/saturno",
+      "/neptuno"
+    ]
+  },
+  "vars": {
+    "VOTING_ENABLED": "true"
+  }
+}

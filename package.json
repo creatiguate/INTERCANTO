@@ -1,0 +1,17 @@
+{
+  "name": "creatiguate-intercanto-votaciones",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "local:setup": "node scripts/setup-local.mjs",
+    "dev": "wrangler dev --port 8787",
+    "doctor": "node scripts/doctor.mjs",
+    "doctor:online": "node scripts/doctor.mjs --online",
+    "deploy": "wrangler deploy",
+    "test": "node --test tests/*.test.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^4.45.0"
+  }
+}

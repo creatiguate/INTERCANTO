@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="es-GT">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#28114c">
+  <meta name="description" content="Apoya al talento de Coatepeque en Intercanto Temporada 3. Tu voto cuenta.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="INTERCANTO T3 — ¡Tu voz cuenta!">
+  <meta property="og:description" content="Conoce a los participantes y apoya a tu favorito en Intercanto Temporada 3.">
+  <meta property="og:image" content="./assets/poster-intercanto.webp">
+  <meta property="og:locale" content="es_GT">
+  <meta name="twitter:card" content="summary_large_image">
+  <!-- OG_DYNAMIC -->
+  <title>INTERCANTO • Temporada 3 | Votaciones</title>
+  <link rel="icon" type="image/svg+xml" href="./assets/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700;800;900&family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./styles.css">
+  <script type="module" src="./app.js"></script>
+</head>
+<body>
+
+  <a class="skip-link" href="#main-content">Saltar al contenido</a>
+  <div class="top-band"><span class="top-band-right">COATEPEQUE, GUATEMALA · TEMPORADA 03</span></div>
+  <header class="site-header" id="inicio">
+    <a href="/" class="logo" aria-label="Intercanto, volver al inicio">
+      <span class="logo-icon" aria-hidden="true">♫<i>✦</i></span>
+      <span class="logo-name">INTER<span>CANTO</span><small>TEMPORADA 3 · COATEPEQUE</small></span>
+    </a>
+    <nav class="desktop-nav" aria-label="Navegación principal">
+      <a href="#participantes">Participantes</a><a href="#ranking">Ranking</a><a href="#aliados">Aliados</a>
+    </nav>
+    <div class="header-account">
+      <span id="account-label" aria-live="polite"></span>
+      <div id="google-signin-button" class="google-signin-button header-google-signin" aria-label="Iniciar sesión con Google">
+        <button class="google-fallback-button" type="button" data-google-oauth aria-label="Acceder con Google">
+          <svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.47-4.73 7.16l7.66 5.94c4.47-4.13 7.11-10.2 7.11-17.57z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.53 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.88l-7.66-5.94c-2.13 1.43-4.86 2.28-8.25 2.28-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          <span>Acceder con Google</span>
+        </button>
+      </div>
+      <button class="header-signout" id="signout-button" type="button" hidden>Salir</button>
+      <span id="google-signin-error" class="google-signin-error" role="alert" hidden></span>
+    </div>
+  </header>
+
+  <main id="main-content" tabindex="-1">
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-lines" aria-hidden="true"></div>
+      <div class="hero-content wrap">
+        <div class="hero-copy">
+          <div class="eyebrow"><span class="eyebrow-dot"></span> CENTRO COMERCIAL INTERNACIONAL PRESENTA</div>
+          <div class="hero-title-group">
+            <h1 id="hero-title">EL TALENTO<br>SE <span class="hero-vota">VOTA<span class="period">.</span></span></h1>
+          </div>
+          <p class="hero-description">Elige a tu favorito y vota.</p>
+          <div class="hero-actions">
+            <a href="#participantes" class="btn btn-primary">CONOCE A LOS TALENTOS <span aria-hidden="true">→</span></a>
+            <a href="#ranking" class="btn btn-outline">VER EL RANKING</a>
+          </div>
+          <div class="hero-facts"><div><strong>07</strong><span>VOCES EN ESCENA</span></div><div><strong>10</strong><span>VOTOS POR CUENTA</span></div><div><strong>100%</strong><span>GRATUITO</span></div></div>
+        </div>
+        <div class="hero-art" id="hero-carousel" role="region" aria-label="Participantes destacados de Intercanto">
+          <div class="hero-orbit orbit-one"></div><div class="hero-orbit orbit-two"></div>
+          <div class="hero-carousel-track" id="hero-carousel-track" aria-live="off"></div>
+          <div class="hero-sticker"><small>QUE SUENE</small><strong>LA VOZ</strong><span>DE NUESTRA GENTE!</span></div>
+          <div class="hero-carousel-controls" role="group" aria-label="Controles de participantes">
+            <span class="hero-carousel-count"><span id="hero-carousel-current">01</span><span aria-hidden="true"> / </span><span id="hero-carousel-total">07</span></span>
+            <button type="button" id="hero-carousel-previous" aria-label="Participante anterior">←</button>
+            <button type="button" id="hero-carousel-next" aria-label="Siguiente participante">→</button>
+          </div>
+          <div class="hero-art-label">INTERCANTO <em>03</em></div>
+        </div>
+      </div>
+      <div class="hero-footer"><div class="wrap"><span><span class="live-dot"></span> <span id="hero-status">CONECTANDO CON LA VOTACIÓN</span></span></div></div>
+    </section>
+
+    <div class="sponsor-strip" aria-label="Colaboradores del evento"><div class="wrap"><span class="sponsor-label"><b>NUESTROS ALIADOS</b></span><div class="sponsor-logos">
+      <img src="./assets/logo-cci.webp" alt="Centro Comercial Internacional" loading="lazy">
+      <img src="./assets/logo-esmeraldas-cosmetic.webp" alt="Esmeralda's Cosmetic" loading="lazy">
+      <img src="./assets/logo-aguileon-restaurante.webp" alt="Restaurante Aguileón" loading="lazy">
+      <img src="./assets/logo-financiera-genesis.webp" alt="Financiera Génesis" loading="lazy">
+      <img src="./assets/logo-creatiguate.webp" alt="CreatiGuate" loading="lazy">
+      <img src="./assets/despensafamiliar.png" alt="Despensa Familiar" loading="lazy">
+    </div></div></div>
+
+    <section class="participants-section section-pad" id="participantes" aria-labelledby="participants-title">
+      <div class="wrap">
+        <div class="section-heading"><div><h2 id="participants-title">PARTICIPANTES</h2></div><div class="account-balance" id="account-balance" hidden><strong id="votes-remaining">10</strong><span>VOTOS DISPONIBLES</span></div></div>
+        <div class="votes-note" id="vote-notice" role="status"><span class="notice-icon">✦</span> <span id="votes-notice-copy">Cargando votaciones…</span></div>
+        <div class="participants-grid" id="participants-grid" aria-live="polite"></div>
+        <details id="vote-history" class="vote-history" hidden><summary>Mi historial de votos (<span id="history-count">0</span> recientes)</summary></details>
+      </div>
+    </section>
+
+    <section class="ranking-section section-pad" id="ranking" aria-labelledby="ranking-title">
+      <div class="ranking-glow"></div>
+      <div class="wrap ranking-grid">
+        <div class="ranking-left"><h2 id="ranking-title">RANKING</h2>
+          <div class="ranking-stat"><span>VOTOS TOTALES</span><strong id="total-votes" aria-live="polite">—</strong></div>
+          <button type="button" class="rank-refresh" id="refresh-ranking">↻ ACTUALIZAR</button>
+          <div class="rank-time" id="ranking-updated">Resultados conectados al servidor</div>
+        </div>
+        <div class="ranking-board"><div class="ranking-board-head"><span><span class="live-dot"></span> CLASIFICACIÓN</span><span>VOTOS</span></div><div id="ranking-list" class="ranking-list"><p class="ranking-loading">Cargando resultados…</p></div></div>
+      </div>
+    </section>
+    <section class="partners-section section-pad" id="aliados" aria-labelledby="partners-public-title"><div class="wrap">
+      <h2 id="partners-public-title">ALIADOS</h2>
+      <div class="partners-grid">
+        <a class="partner-tile" href="https://www.facebook.com/profile.php?id=100063693845099" target="_blank" rel="noopener noreferrer"><img src="./assets/logo-cci.webp" alt=""><strong>Centro Comercial Internacional</strong><span>VISITAR ↗</span></a>
+        <a class="partner-tile" href="https://www.facebook.com/EsmeraldasCosmeticOficial" target="_blank" rel="noopener noreferrer"><img src="./assets/logo-esmeraldas-cosmetic.webp" alt=""><strong>Esmeraldas Cosmetic</strong><span>VISITAR ↗</span></a>
+        <a class="partner-tile" href="https://www.facebook.com/profile.php?id=100050921876122" target="_blank" rel="noopener noreferrer"><img src="./assets/logo-aguileon-restaurante.webp" alt=""><strong>Restaurante Aguileón</strong><span>VISITAR ↗</span></a>
+        <a class="partner-tile" href="https://www.facebook.com/profile.php?id=61552143504290" target="_blank" rel="noopener noreferrer"><img src="./assets/logo-financiera-genesis.webp" alt=""><strong>Financiera Génesis</strong><span>VISITAR ↗</span></a>
+        <a class="partner-tile" href="https://www.facebook.com/creatiguate" target="_blank" rel="noopener noreferrer"><img src="./assets/logo-creatiguate.webp" alt=""><strong>CreatiGuate</strong><span>VISITAR ↗</span></a>
+      </div>
+    </div></section>
+
+    <section class="event-section"><div class="wrap event-layout"><div class="event-poster"><img src="./assets/poster-intercanto.webp" loading="lazy" alt="Cartel de Intercanto Temporada 3"></div><div class="event-copy"><h2><em>GRAN FINAL</em></h2><p class="final-date">29 DE NOVIEMBRE DE 2026</p><p>El ganador se anunciará ese día.</p><a href="#participantes" class="btn btn-white">VOTAR <span aria-hidden="true">→</span></a></div></div></section>
+  </main>
+  <footer class="footer"><div class="wrap"><div class="footer-brand"><span class="footer-title">INTERCANTO <b>T3</b></span></div><div class="footer-right"><span>CENTRO COMERCIAL INTERNACIONAL · COATEPEQUE</span><small>Concepto y desarrollo visual: <strong>CreatiGuate</strong></small></div></div><div class="footer-bottom">© <span id="year">2026</span> INTERCANTO. TODOS LOS DERECHOS RESERVADOS.</div></footer>
+
+  <dialog id="onboarding-dialog" class="flow-dialog" aria-labelledby="onboarding-title">
+    <div class="flow-dialog-head"><span>INTERCANTO TEMPORADA 3</span><span>ANTES DE VOTAR</span></div>
+    <section id="login-step">
+      <h2 id="onboarding-title">INICIA SESIÓN</h2>
+      <p>Accede con Google para votar.</p>
+      <div id="google-signin-modal-button" class="google-signin-button modal-google-signin" aria-label="Iniciar sesión con Google">
+        <button class="google-fallback-button" type="button" data-google-oauth aria-label="Acceder con Google">
+          <svg aria-hidden="true" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.25 5.47-4.73 7.16l7.66 5.94c4.47-4.13 7.11-10.2 7.11-17.57z"/><path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.53 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.91-5.88l-7.66-5.94c-2.13 1.43-4.86 2.28-8.25 2.28-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+          <span>Acceder con Google</span>
+        </button>
+      </div>
+      <p class="fine-note">Tu correo no aparece en el ranking público.</p>
+    </section>
+    <p class="modal-error" id="signin-dialog-error" role="alert" hidden></p>
+  </dialog>
+
+  <dialog id="vote-dialog" class="vote-dialog" aria-labelledby="dialog-title">
+    <div class="modal-shell">
+      <button class="dialog-close" type="button" data-close-dialog="vote-dialog" aria-label="Cerrar">×</button>
+      <div class="modal-visual"><img id="modal-img" src="./assets/eyfrid-enrique-matias.webp" alt=""><div class="modal-visual-foot"><span>INTERCANTO T3</span><strong id="modal-name-visual"></strong></div></div>
+      <div class="modal-content">
+        <h2 id="dialog-title">VOTAR</h2>
+        <p class="modal-intro">Vas a votar por <strong id="modal-name"></strong>.</p>
+        <label class="quantity-label" for="vote-quantity">¿CUÁNTOS VOTOS?</label>
+        <select id="vote-quantity" class="quantity-select"></select>
+        <p id="vote-remaining-copy" class="modal-rule"></p>
+        <label class="confirm-label vote-confirm-label"><input type="checkbox" id="vote-confirm"><span id="vote-confirm-copy">Confirmo que mis votos van para esta persona.</span></label>
+        <button type="button" class="btn btn-primary modal-vote-button" id="confirm-vote">CONFIRMAR VOTOS <span aria-hidden="true">♥</span></button>
+        <p class="modal-error" id="vote-error" role="alert" hidden></p>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="success-dialog" class="flow-dialog" aria-labelledby="success-title">
+    <button class="dialog-close" type="button" data-close-dialog="success-dialog" aria-label="Cerrar">×</button>
+    <div class="success-icon" aria-hidden="true">♥</div>
+    <h2 id="success-title">¡VOTOS<br><em>REGISTRADOS!</em></h2><p id="success-message"></p>
+    <div class="share-actions"><button type="button" class="btn btn-primary" id="share-whatsapp">COMPARTIR</button><button type="button" class="btn btn-outline" id="share-copy">COPIAR ENLACE</button></div>
+  </dialog>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
