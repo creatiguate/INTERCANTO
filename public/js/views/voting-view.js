@@ -10,6 +10,29 @@ function node(tag, className, text) {
   return element;
 }
 
+let turnstileScriptPromise;
+
+function loadTurnstileScript() {
+  if (window.turnstile) return Promise.resolve(window.turnstile);
+  if (!turnstileScriptPromise) {
+    turnstileScriptPromise = new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+      script.async = true;
+      script.defer = true;
+      script.onload = () => window.turnstile
+        ? resolve(window.turnstile)
+        : reject(new Error('Turnstile no pudo inicializarse.'));
+      script.onerror = () => reject(new Error('No se pudo cargar la verificación de seguridad.'));
+      document.head.append(script);
+    }).catch((error) => {
+      turnstileScriptPromise = null;
+      throw error;
+    });
+  }
+  return turnstileScriptPromise;
+}
+
 export class VotingView {
   constructor() {
     this.onboarding = $('#onboarding-dialog');
@@ -22,6 +45,11 @@ export class VotingView {
     this.signInRequested = false;
     this.revealedParticipantIds = new Set();
     this.participantObserver = null;
+    this.turnstileSiteKey = null;
+    this.turnstileWidgetId = null;
+    this.turnstileToken = null;
+    this.turnstileReady = false;
+    this.turnstileError = null;
     // La aplicación usa exclusivamente Google + Supabase; no hay acceso simulado.
     for (const button of [$('#google-signin-button'), $('#google-signin-modal-button')]) {
       button.dataset.status = 'fallback';
@@ -57,6 +85,67 @@ export class VotingView {
     });
     $('#share-whatsapp').addEventListener('click', actions.shareSuccess);
     $('#share-copy').addEventListener('click', actions.copySuccess);
+  }
+
+  async configureTurnstile(siteKey) {
+    this.turnstileSiteKey = typeof siteKey === 'string' ? siteKey : null;
+    const widget = $('#turnstile-widget');
+    if (!this.turnstileSiteKey) {
+      widget.hidden = true;
+      this.turnstileReady = true;
+      return;
+    }
+
+    try {
+      await loadTurnstileScript();
+      this.turnstileReady = true;
+    } catch (error) {
+      this.turnstileError = error;
+      console.error('Intercanto Turnstile unavailable:', error);
+    }
+  }
+
+  activateTurnstile() {
+    if (!this.turnstileSiteKey) return;
+    const widget = $('#turnstile-widget');
+    widget.hidden = false;
+    if (!this.turnstileReady || this.turnstileError) {
+      this.showError('No se pudo cargar la verificación de seguridad. Intenta de nuevo más tarde.', 'vote-error');
+      return;
+    }
+
+    this.resetTurnstile();
+    if (this.turnstileWidgetId !== null) return;
+
+    try {
+      this.turnstileWidgetId = window.turnstile.render(widget, {
+        sitekey: this.turnstileSiteKey,
+        action: 'vote',
+        callback: (token) => {
+          this.turnstileToken = token;
+          this.updateVoteButton();
+        },
+        'expired-callback': () => {
+          this.turnstileToken = null;
+          this.updateVoteButton();
+        },
+        'error-callback': () => {
+          this.turnstileToken = null;
+          this.showError('No se pudo verificar la solicitud. Intenta de nuevo.', 'vote-error');
+          this.updateVoteButton();
+        },
+      });
+    } catch (error) {
+      this.turnstileError = error;
+      this.showError('No se pudo cargar la verificación de seguridad. Intenta de nuevo más tarde.', 'vote-error');
+    }
+  }
+
+  resetTurnstile() {
+    this.turnstileToken = null;
+    if (this.turnstileWidgetId !== null && window.turnstile) {
+      window.turnstile.reset(this.turnstileWidgetId);
+    }
   }
 
   bindParticipantTilt() {
@@ -335,6 +424,7 @@ export class VotingView {
     $('#vote-error').hidden = true;
     this.updateVoteButton();
     this.voteDialog.showModal();
+    this.activateTurnstile();
   }
 
   updateVoteButton(working = false) {
@@ -345,7 +435,9 @@ export class VotingView {
     const voteWord = amount === 1 ? 'voto' : 'votos';
     $('#vote-confirm-copy').textContent = `Confirmo que mis ${amount} ${voteWord} van para ${participantName}.`;
     $('#vote-confirm').disabled = working;
-    $('#confirm-vote').disabled = working || !confirmed || !Number.isInteger(amount) || amount < 1 || amount > remaining;
+    const needsTurnstile = this.turnstileSiteKey !== null;
+    $('#confirm-vote').disabled = working || !confirmed || !Number.isInteger(amount) || amount < 1 || amount > remaining ||
+      (needsTurnstile && (!this.turnstileReady || this.turnstileError || !this.turnstileToken));
     $('#confirm-vote').textContent = working ? 'REGISTRANDO…' : `CONFIRMAR ${amount} ${amount === 1 ? 'VOTO' : 'VOTOS'}`;
   }
 
@@ -398,6 +490,7 @@ export class VotingView {
       participant: this.currentParticipant,
       quantity: Number($('#vote-quantity').value),
       confirmed: $('#vote-confirm').checked,
+      turnstileToken: this.turnstileToken,
     };
   }
 }

@@ -4,6 +4,7 @@ import {
 } from '../models/voting-model.js';
 import {
   getSession,
+  getPublicConfig,
   mountGoogleSignIn,
   signInWithGoogle,
   signOut,
@@ -32,6 +33,12 @@ export class VotingController {
       shareSuccess: () => this.shareSuccess(),
       copySuccess: () => this.copySuccess(),
     });
+    try {
+      const config = await getPublicConfig();
+      await this.view.configureTurnstile(config.turnstileSiteKey);
+    } catch (error) {
+      console.error('Intercanto public security configuration unavailable:', error);
+    }
     await this.refresh(false);
     try {
       this.unsubscribe = await subscribeToAuth(() => this.refresh(false));
@@ -127,7 +134,7 @@ export class VotingController {
   }
 
   async submitVotes() {
-    const { participant, quantity, confirmed } = this.view.currentVote();
+    const { participant, quantity, confirmed, turnstileToken } = this.view.currentVote();
     if (!participant || !this.data?.user || !confirmed) return;
     const fingerprint = `${participant.id}:${quantity}`;
     if (this.pendingRequest?.fingerprint !== fingerprint) {
@@ -140,6 +147,7 @@ export class VotingController {
         participantId: participant.id,
         quantity,
         requestId: this.pendingRequest.id,
+        turnstileToken,
       });
       this.pendingRequest = null;
       const link = participantUrl(participant.slug);
@@ -148,6 +156,7 @@ export class VotingController {
       await this.refresh(false);
     } catch (error) {
       this.view.showError(error.message || 'No se pudo guardar el voto.', 'vote-error');
+      this.view.resetTurnstile();
       this.view.updateVoteButton(false);
     }
   }

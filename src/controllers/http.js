@@ -2,6 +2,8 @@ export const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-Frame-Options': 'DENY',
+  'Strict-Transport-Security': 'max-age=31536000',
+  'Content-Security-Policy': "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' https://*.supabase.co; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com data:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com; script-src 'self' https://esm.sh https://accounts.google.com https://apis.google.com https://www.gstatic.com https://challenges.cloudflare.com; connect-src 'self' https://*.supabase.co https://accounts.google.com https://apis.google.com https://esm.sh https://www.gstatic.com https://challenges.cloudflare.com https://creatiguate-intercanto-votaciones.creatiguate2003.workers.dev; frame-src https://accounts.google.com https://challenges.cloudflare.com https://*.supabase.co; worker-src 'self' blob:",
 };
 
 export function json(data, status = 200, extra = {}) {

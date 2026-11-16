@@ -35,6 +35,8 @@ La opción más sencilla para publicar la aplicación completa es desplegarla en
 
 Se guardan en `.dev.vars`, excluido de Git. Ninguna clave privada está incluida en este ZIP. En `http://localhost:8787` el Worker siempre consulta su API local, aunque configures `API_ORIGIN` para GitHub Pages.
 
+Para activar la verificación Turnstile en local, agrega `TURNSTILE_SITE_KEY` y `TURNSTILE_SECRET_KEY` a `.dev.vars`. La clave secreta no debe subirse a GitHub.
+
 ### Si aparece “La API devolvió una página en lugar de JSON”
 
 La página se abrió desde un servidor estático (por ejemplo, Live Server o GitHub Pages) y no encuentra el Worker. Para probar en local, configura `.dev.vars` con `npm run local:setup`, ejecuta `npm run doctor` y `npm run dev`, y abre **http://localhost:8787**. No abras el HTML directamente ni uses Live Server.
@@ -79,8 +81,9 @@ Abre **Supabase Dashboard > SQL Editor**:
 
 1. Si **NO** tienes `public.votes`, ejecuta primero `supabase/migrations/20261109000000_create_intercanto_votes.sql`. Si ya existe de un proyecto anterior, **no vuelvas a crearla**.
 2. Ejecuta `supabase/migrations/20261111000000_account_voting_and_onboarding.sql` y después las migraciones `20261112000000_optional_partner_visits.sql` y `20261112000100_optional_partner_flags.sql`. Eliminan el requisito de visitar aliados para votar; cada cuenta conserva sus diez votos. **Las migraciones no se ejecutan solas** al iniciar la web.
-3. En `Authentication > Providers > Google` habilita Google y configura el **Client ID** y **Client Secret** de Google Cloud. La clave secreta de Google va solo en Supabase; nunca en el sitio o este repositorio.
-4. Entra una vez a la web con tu cuenta Google y autorízate como administrador en SQL Editor (cambia el correo):
+3. `supabase/migrations/20261113000000_voting_admin_audit_log.sql` añade un registro de cambios administrativos y conserva las visitas/confirmaciones al editar aliados. No actualiza ni elimina filas de votos. Antes de aplicarla a producción, verifica un respaldo recuperable y autoriza explícitamente el cambio; no la ejecutes como parte de una prueba.
+4. En `Authentication > Providers > Google` habilita Google y configura el **Client ID** y **Client Secret** de Google Cloud. La clave secreta de Google va solo en Supabase; nunca en el sitio o este repositorio.
+5. Entra una vez a la web con tu cuenta Google y autorízate como administrador en SQL Editor (cambia el correo):
 
    ```sql
    insert into public.voting_admins (user_id)
@@ -88,7 +91,7 @@ Abre **Supabase Dashboard > SQL Editor**:
    on conflict (user_id) do nothing;
    ```
 
-5. Si quieres, administra los enlaces de los aliados en **http://localhost:8787/admin**. Las visitas son opcionales y no bloquean la votación.
+6. Si quieres, administra los enlaces de los aliados en **http://localhost:8787/admin**. Las visitas son opcionales y no bloquean la votación.
 
 La aplicación ofrece diez votos por cuenta de Google. En cada voto, la persona elige cuántos usar y confirma que se asignarán al participante seleccionado. La sección de aliados es informativa: visitar sus páginas no es requisito y no agrega votos.
 
@@ -122,12 +125,25 @@ npx wrangler secret put SUPABASE_PUBLISHABLE_KEY
 npx wrangler secret put SUPABASE_SERVER_KEY
 npx wrangler secret put GOOGLE_CLIENT_ID
 npx wrangler secret put IP_HASH_SECRET
+npx wrangler secret put TURNSTILE_SITE_KEY
+npx wrangler secret put TURNSTILE_SECRET_KEY
 npm run deploy
 ```
 
 Wrangler te pedirá los valores de cada secreto por terminal. Para `IP_HASH_SECRET`, pega el mismo valor largo que está en tu `.dev.vars` (o genera otro aleatorio). Después del deploy, anota el enlace HTTPS **real** que Wrangler devuelve, por ejemplo `https://nombre.usuario.workers.dev`. Desde ese enlace ya puedes mostrar **toda** la página, su panel `/admin` y sus perfiles con URL planetaria (como `/marte`), sin GitHub Pages.
 
+Turnstile requiere una clave de sitio y un secreto creados para los dominios donde se publica la web (`creatiguate.github.io` y el dominio del Worker). Configura ambos valores para activar el desafío en el voto; si falta uno, la API se detiene con error de configuración. No compartas ni publiques el secreto.
+
 **No publiques `.dev.vars` ni el secret de Supabase**; `.gitignore` los protege, pero revísalo antes de cualquier commit. GitHub sirve para guardar/versionar el proyecto y, si deseas, hospedar una copia del frontend.
+
+Para revertir solo el código del Worker, consulta las versiones disponibles y selecciona la versión estable anterior:
+
+```powershell
+npx wrangler deployments list --name creatiguate-intercanto-votaciones
+npx wrangler rollback <VERSION_ID> --name creatiguate-intercanto-votaciones
+```
+
+El rollback del Worker no revierte cambios de base de datos. No reviertas ni restaures datos de Supabase sin respaldo verificado y autorización explícita.
 
 ## 4. Si quieres que se vea desde GitHub Pages
 
@@ -147,7 +163,7 @@ Esta edición del proyecto también admite un frontend estático **real**, conec
 5. En el repositorio, abre **Settings > Pages > Build and deployment > Deploy from a branch > main > /(root) > Save**. En tu enlace de Pages, `index.html` de la raíz entra directamente a la web original en `public/index.html`, sin mostrar selector de demo.
 6. En Google Cloud agrega `https://TU-USUARIO.github.io` a los orígenes y en Supabase permite `https://TU-USUARIO.github.io/TU-REPOSITORIO/**` en redirects (sección 2).
 
-**Importante:** la página en GitHub Pages mostrará tu diseño, ranking y voto REAL solo cuando el Worker esté desplegado y las claves/CORS estén configurados. Si no hay backend, verás un mensaje de conexión en lugar de votos de fantasía. Las URLs compartidas de participantes en GitHub Pages usan `?participant=marte`; las de Cloudflare Worker usan `/marte` y generan metadatos específicos para compartir.
+**Importante:** la página en GitHub Pages mostrará tu diseño, ranking y voto REAL solo cuando el Worker esté desplegado y las claves/CORS estén configurados. Si no hay backend, verás un mensaje de conexión en lugar de votos de fantasía. Las URLs compartidas de participantes en GitHub Pages usan `?participant=marte`; las de Cloudflare Worker usan `/marte` y generan metadatos específicos para compartir. En Cloudflare también se aceptan `/participantes`, `/ranking` y `/participantes/marte` como alias limpios.
 
 En GitHub Pages el panel de administración está en `.../public/admin.html`; en Cloudflare en `/admin`. Ambos usan la misma base de datos.
 

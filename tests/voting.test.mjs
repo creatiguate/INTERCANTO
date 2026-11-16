@@ -78,6 +78,17 @@ test('public state is read through the aggregate RPC', async () => {
   assert.equal(app.calls[0].url.pathname, '/rest/v1/rpc/get_voting_public_state');
 });
 
+test('worker responses include transport and browser security headers', async () => {
+  const app = setup();
+  const response = await handler.fetch(app.request('/api/config'), app.env);
+
+  assert.equal(response.headers.get('Strict-Transport-Security'), 'max-age=31536000');
+  assert.equal(response.headers.get('X-Content-Type-Options'), 'nosniff');
+  assert.equal(response.headers.get('X-Frame-Options'), 'DENY');
+  assert.equal(response.headers.get('Referrer-Policy'), 'strict-origin-when-cross-origin');
+  assert.match(response.headers.get('Content-Security-Policy'), /default-src 'self'/);
+});
+
 test('voting requires a valid Google session and same-origin request', async () => {
   const app = setup();
   const noSession = await handler.fetch(
@@ -131,6 +142,89 @@ test('an authenticated vote sends the server-only HMAC to the cast RPC', async (
   assert.equal(new Headers(castCall.options.headers).get('Authorization'), null);
 });
 
+test('configured Turnstile rejects a vote without a challenge token', async () => {
+  const app = setup({ authUser: googleUser });
+  app.env.TURNSTILE_SITE_KEY = 'test-site-key';
+  app.env.TURNSTILE_SECRET_KEY = 'test-secret-key';
+
+  const response = await handler.fetch(
+    app.request('/api/vote', {
+      method: 'POST',
+      body: validVote,
+      headers: { Authorization: 'Bearer test-access-token-long-enough' },
+    }),
+    app.env,
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error, 'TURNSTILE_REQUIRED');
+  assert.equal(app.calls.some((call) => call.url.pathname.endsWith('/cast_intercanto_votes')), false);
+});
+
+test('an authenticated vote requires Turnstile success for the origin and vote action', async () => {
+  const app = setup({
+    authUser: googleUser,
+    rpcResponses: {
+      cast_intercanto_votes: { votesUsed: 2, votesRemaining: 8, replayed: false },
+    },
+  });
+  app.env.TURNSTILE_SITE_KEY = 'test-site-key';
+  app.env.TURNSTILE_SECRET_KEY = 'test-secret-key';
+  const originalFetch = globalThis.fetch;
+  let verifyRequest;
+  globalThis.fetch = async (input, options) => {
+    verifyRequest = { url: String(input), options };
+    return Response.json({ success: true, hostname: 'intercanto.example', action: 'vote' });
+  };
+
+  try {
+    const response = await handler.fetch(
+      app.request('/api/vote', {
+        method: 'POST',
+        body: { ...validVote, turnstileToken: 'test-turnstile-token' },
+        headers: { Authorization: 'Bearer test-access-token-long-enough' },
+      }),
+      app.env,
+    );
+
+    assert.equal(response.status, 201);
+    assert.equal(verifyRequest.url, 'https://challenges.cloudflare.com/turnstile/v0/siteverify');
+    assert.match(String(verifyRequest.options.body), /secret=test-secret-key/);
+    assert.equal(app.calls.some((call) => call.url.pathname.endsWith('/cast_intercanto_votes')), true);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test('Turnstile rejects a successful response for another hostname or action', async () => {
+  const app = setup({ authUser: googleUser });
+  app.env.TURNSTILE_SITE_KEY = 'test-site-key';
+  app.env.TURNSTILE_SECRET_KEY = 'test-secret-key';
+  const originalFetch = globalThis.fetch;
+
+  try {
+    for (const result of [
+      { success: true, hostname: 'attacker.example', action: 'vote' },
+      { success: true, hostname: 'intercanto.example', action: 'other' },
+    ]) {
+      globalThis.fetch = async () => Response.json(result);
+      const response = await handler.fetch(
+        app.request('/api/vote', {
+          method: 'POST',
+          body: { ...validVote, turnstileToken: 'test-turnstile-token' },
+          headers: { Authorization: 'Bearer test-access-token-long-enough' },
+        }),
+        app.env,
+      );
+
+      assert.equal(response.status, 403);
+    }
+    assert.equal(app.calls.some((call) => call.url.pathname.endsWith('/cast_intercanto_votes')), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('invalid vote input is rejected before contacting Supabase', async () => {
   const app = setup();
 
@@ -163,6 +257,20 @@ test('legacy participant links redirect to planet slugs', async () => {
 
   assert.equal(response.status, 308);
   assert.equal(response.headers.get('Location'), 'https://intercanto.example/venus');
+});
+
+test('clean section and participant aliases redirect to existing routes', async () => {
+  const app = setup();
+  const participants = await handler.fetch(app.request('/participantes'), app.env);
+  const ranking = await handler.fetch(app.request('/ranking'), app.env);
+  const profile = await handler.fetch(app.request('/participantes/venus'), app.env);
+
+  assert.equal(participants.status, 308);
+  assert.equal(participants.headers.get('Location'), 'https://intercanto.example/#participantes');
+  assert.equal(ranking.status, 308);
+  assert.equal(ranking.headers.get('Location'), 'https://intercanto.example/#ranking');
+  assert.equal(profile.status, 308);
+  assert.equal(profile.headers.get('Location'), 'https://intercanto.example/venus');
 });
 
 test('planet profile routes return participant-specific social metadata', async () => {
@@ -225,7 +333,18 @@ test('public /api/config never returns a Supabase server key', async () => {
   const config = await response.json();
   assert.equal(config.googleClientId, app.env.GOOGLE_CLIENT_ID);
   assert.equal(config.publishableKey, app.env.SUPABASE_PUBLISHABLE_KEY);
+  assert.equal(config.turnstileSiteKey, null);
   assert.equal(JSON.stringify(config).includes(app.env.SUPABASE_SERVER_KEY), false);
+});
+
+test('partial Turnstile configuration fails closed', async () => {
+  const app = setup();
+  app.env.TURNSTILE_SITE_KEY = 'test-site-key';
+
+  const response = await handler.fetch(app.request('/api/config'), app.env);
+
+  assert.equal(response.status, 503);
+  assert.equal((await response.json()).error, 'SERVER_NOT_CONFIGURED');
 });
 
 test('local Wrangler without Cloudflare IP header can cast votes, but public host cannot', async () => {

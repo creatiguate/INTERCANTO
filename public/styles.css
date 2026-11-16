@@ -27,7 +27,6 @@ html {
 
 body {
   margin: 0;
-  overflow-x: hidden;
   background: var(--paper);
   color: var(--ink);
   font: 500 15px/1.65 var(--font-body);
@@ -2524,6 +2523,11 @@ main:focus {
     padding-inline: 24px;
   }
 
+  .header-google-signin {
+    width: 241px;
+    flex: 0 0 241px;
+  }
+
   .top-band {
     padding-inline: 24px;
   }
@@ -2685,11 +2689,6 @@ main:focus {
   .site-header {
     height: 68px;
     padding-inline: 16px;
-  }
-
-  .header-google-signin {
-    width: 165px;
-    flex-basis: 165px;
   }
 
   .logo-icon {
@@ -3323,11 +3322,6 @@ main:focus {
 }
 
 @media (max-width: 360px) {
-  .header-google-signin {
-    width: 140px;
-    flex-basis: 140px;
-  }
-
   .hero h1 {
     font-size: 68px;
   }
@@ -3363,8 +3357,8 @@ main:focus {
   }
 
   .header-google-signin {
-    width: 148px;
-    flex-basis: 148px;
+    width: 241px;
+    flex: 0 0 241px;
   }
 
   .header-google-signin .google-fallback-button {
@@ -3397,5 +3391,29 @@ main:focus {
 
   .admin-save {
     grid-column: 2;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    scroll-padding-top: 124px;
+  }
+
+  .site-header {
+    height: auto;
+    min-height: 68px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 8px;
+    padding-block: 10px;
+  }
+
+  .logo {
+    align-self: center;
+  }
+
+  .header-account {
+    width: 100%;
+    justify-content: center;
   }
 }

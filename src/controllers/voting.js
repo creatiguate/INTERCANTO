@@ -34,14 +34,43 @@ function participantExists(id) {
   return typeof id === 'string' && PARTICIPANTS.some((participant) => participant.id === id);
 }
 
+function getTurnstileSettings(env) {
+  const siteKey = typeof env.TURNSTILE_SITE_KEY === 'string' ? env.TURNSTILE_SITE_KEY.trim() : '';
+  const secretKey = typeof env.TURNSTILE_SECRET_KEY === 'string' ? env.TURNSTILE_SECRET_KEY.trim() : '';
+  return { siteKey, secretKey, enabled: Boolean(siteKey || secretKey) };
+}
+
+async function verifyTurnstile(request, token, secretKey) {
+  const origin = request.headers.get('Origin');
+  if (!origin || !token) return false;
+  const expectedHostname = new URL(origin).hostname.toLowerCase();
+  const form = new URLSearchParams({ secret: secretKey, response: token });
+  const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form,
+    signal: AbortSignal.timeout(5000),
+  });
+  if (!response.ok) throw new Error('Turnstile verification service returned an error.');
+  const result = await response.json();
+  return result.success === true &&
+    result.hostname?.toLowerCase() === expectedHostname &&
+    result.action === 'vote';
+}
+
 export async function getConfigController(env) {
   if (!env.SUPABASE_URL || !env.SUPABASE_PUBLISHABLE_KEY || !env.GOOGLE_CLIENT_ID) {
     return json({ error: 'SERVER_NOT_CONFIGURED', message: 'Faltan SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY o GOOGLE_CLIENT_ID en el servidor.' }, 503);
+  }
+  const turnstile = getTurnstileSettings(env);
+  if (turnstile.enabled && (!turnstile.siteKey || !turnstile.secretKey)) {
+    return json({ error: 'SERVER_NOT_CONFIGURED', message: 'La configuración de Turnstile está incompleta.' }, 503);
   }
   return json({
     supabaseUrl: env.SUPABASE_URL,
     publishableKey: env.SUPABASE_PUBLISHABLE_KEY,
     googleClientId: env.GOOGLE_CLIENT_ID || null,
+    turnstileSiteKey: turnstile.siteKey || null,
   }, 200, { 'Cache-Control': 'public, max-age=300' });
 }
 
@@ -87,6 +116,18 @@ export async function castVoteController(request, env) {
   const authenticated = await requireGoogleUser(request, env);
   if (authenticated.response) return authenticated.response;
   try {
+    const turnstile = getTurnstileSettings(env);
+    if (turnstile.enabled) {
+      if (!turnstile.siteKey || !turnstile.secretKey) {
+        return json({ error: 'SERVER_NOT_CONFIGURED', message: 'La configuración de Turnstile está incompleta.' }, 503);
+      }
+      if (typeof body.turnstileToken !== 'string' || body.turnstileToken.length > 2048) {
+        return json({ error: 'TURNSTILE_REQUIRED', message: 'Completa la verificación antes de votar.' }, 400);
+      }
+      if (!await verifyTurnstile(request, body.turnstileToken, turnstile.secretKey)) {
+        return json({ error: 'TURNSTILE_FAILED', message: 'No se pudo verificar la solicitud. Intenta de nuevo.' }, 403);
+      }
+    }
     const result = await castVotes(env, {
       userId: authenticated.user.id,
       participantId: body.participantId,

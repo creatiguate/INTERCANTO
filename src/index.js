@@ -85,6 +85,22 @@ async function route(request, env) {
     return env.ASSETS.fetch(new URL('/admin.html', request.url));
   }
 
+  if (path === '/participantes') {
+    return Response.redirect(new URL('/#participantes', request.url), 308);
+  }
+
+  if (path === '/ranking') {
+    return Response.redirect(new URL('/#ranking', request.url), 308);
+  }
+
+  const participantAlias = path.match(/^\/participantes\/([a-z0-9-]+)$/);
+  if (participantAlias) {
+    const aliasedParticipant = PARTICIPANTS.find((item) => item.slug === participantAlias[1]);
+    if (aliasedParticipant) {
+      return Response.redirect(new URL(`/${aliasedParticipant.slug}`, request.url), 308);
+    }
+  }
+
   const legacyShare = path.match(/^\/c\/([a-z0-9-]+)$/);
   if (legacyShare) {
     const oldParticipant = PARTICIPANTS.find((item) => item.id === legacyShare[1]);
