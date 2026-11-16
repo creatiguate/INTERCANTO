@@ -3,6 +3,7 @@
   "name": "creatiguate-intercanto-votaciones",
   "main": "./src/index.js",
   "compatibility_date": "2026-11-09",
+  "preview_urls": false,
   "assets": {
     "directory": "./public",
     "binding": "ASSETS",
