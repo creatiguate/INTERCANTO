@@ -141,13 +141,8 @@ Esta edición del proyecto también admite un frontend estático **real**, conec
    ```
 
    Es únicamente la dirección pública de la API. **No coloques ninguna clave privada ni de Google aquí.**
-3. En Cloudflare, autoriza el dominio desde donde se harán los votos:
+3. `wrangler.jsonc` ya autoriza el origen de GitHub Pages (`https://creatiguate.github.io`) mediante `FRONTEND_ORIGINS`; no es un secreto. Si usas otro dominio, cambia esa variable por el origen HTTPS exacto y vuelve a desplegar el Worker.
 
-   ```powershell
-   npx wrangler secret put FRONTEND_ORIGINS
-   ```
-
-   Escribe **`https://TU-USUARIO.github.io`**, sin rutas, para ese secreto. Si hay varias webs autorizadas, sepáralas por coma. Después actualiza el Worker con `npm run deploy`.
 4. Sube la carpeta **completa** del proyecto a un repositorio de GitHub (con `public/` y `src/`); no subas `.dev.vars` ni `node_modules/`.
 5. En el repositorio, abre **Settings > Pages > Build and deployment > Deploy from a branch > main > /(root) > Save**. En tu enlace de Pages, `index.html` de la raíz entra directamente a la web original en `public/index.html`, sin mostrar selector de demo.
 6. En Google Cloud agrega `https://TU-USUARIO.github.io` a los orígenes y en Supabase permite `https://TU-USUARIO.github.io/TU-REPOSITORIO/**` en redirects (sección 2).

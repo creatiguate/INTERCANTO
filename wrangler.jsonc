@@ -20,6 +20,7 @@
     ]
   },
   "vars": {
+    "FRONTEND_ORIGINS": "https://creatiguate.github.io",
     "VOTING_ENABLED": "true"
   }
 }
